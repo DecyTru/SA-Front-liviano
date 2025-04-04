@@ -1,0 +1,22 @@
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+export function convertirAExcel (data)  {
+    if (!data || data.length === 0) {
+        console.error("No hay datos para exportar.");
+        return;
+    }
+
+    const ws = XLSX.utils.json_to_sheet(data); // Convierte el JSON a hoja de Excel
+    const wb = XLSX.utils.book_new();n
+    XLSX.utils.book_append_sheet(wb, ws, "Datos");
+
+    // Genera el archivo en formato Excel
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+    // Crea un Blob y lo descarga con file-saver
+    const dataBlob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const fileName = new Date().toISOString().replace(/[:.]/g, "-") + ".xlsx";
+    saveAs(dataBlob, fileName);
+
+};

@@ -1,0 +1,257 @@
+import {useState} from "react";
+import {FaChevronDown} from "react-icons/fa";
+import {CiEdit} from "react-icons/ci";
+import Swal from "sweetalert2";
+import {requestDate} from "../../../core/services/requestDate.js";
+import {convertirAExcel} from "../../../shared/utils/index.js";
+import {requestUpdate} from "../../../core/services/requestUpdate.js";
+
+export default function Table({data}) {
+    const mascotas = data.Asegurado.Mascotas?.flat() || [];
+    const pagoAsesor = data.Asegurado.PagoAsesor?.flat() || [];
+    const [mascotasData, setMascotasData] = useState(mascotas);
+    const [pagoAsesorData, setPagoAsesorData] = useState(pagoAsesor);
+    const [showInfo, setShowInfo] = useState({poliza: false});
+    const [editable, setEditable] = useState(false);
+
+    const [aseguradoData, setAseguradoData] = useState({
+        NombreAseguradoCompleto: data.Asegurado.NombreAseguradoCompleto,
+        NumeroIdAsegurado: data.Asegurado.NumeroIdAsegurado,
+        PrimerApellidoAsegurado: data.Asegurado.PrimerApellidoAsegurado,
+        SegundoApellidoAsegurado: data.Asegurado.SegundoApellidoAsegurado,
+        SexoAsegurado: data.Asegurado.SexoAsegurado,
+    });
+
+    const toggleSection = (section) => {
+        setShowInfo((prev) => ({...prev, [section]: !prev[section]}));
+    };
+
+    const handleMascotaChange = (e, index, key) => {
+        const {value} = e.target;
+        setMascotasData((prevMascotas) => {
+            const newMascotas = [...prevMascotas];
+            newMascotas[index] = {...newMascotas[index], [key]: value};
+            return newMascotas;
+        });
+    };
+
+    const handleAseguradoChange = (e, key) => {
+        setAseguradoData(prev => ({
+            ...prev,
+            [key]: e.target.value, // Actualiza solo la clave que cambió
+        }));
+    };
+    const handlePagoAsesorChange = (e, index, key) => {
+        const {value} = e.target;
+        setPagoAsesorData((prevPagoAsesor) => {
+            const newPagorAsesor = [...prevPagoAsesor];
+            newPagorAsesor[index] = {...newPagorAsesor[index], [key]: value};
+            return newPagorAsesor;
+        });
+    };
+
+    const handleUpload = async () => {
+        const dataToSend = {
+            ...aseguradoData,
+            ...pagoAsesorData,
+            mascotasData,
+        };
+
+        try {
+            const response = await requestUpdate(dataToSend)
+
+            if (!response) {
+                throw new Error("No se recibió respuesta de la API.");
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Enviado correctamente",
+                text: "Los datos han sido enviados con éxito.",
+            }).then(() => {
+                window.location.reload();
+            });
+
+        } catch (error) {
+            console.error("Error al enviar la información:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error en la solicitud",
+                text: error.message || "Ocurrió un error inesperado.",
+            });
+        }
+    };
+
+
+
+    return (
+        <div className="space-y-4 mx-30 py-20">
+            <h2 className="text-[#2D6DF6] font-bold text-[18px]">Resultados de búsqueda</h2>
+            <p><strong>Cédula:</strong> {aseguradoData.NumeroIdAsegurado}</p>
+
+            <div className={"border-1 border-[#81B1FF] rounded-[24px] bg-white py-4 px-6"}>
+                <div>
+                    <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => toggleSection("poliza")}
+                    >
+                        <h2 className="text-[16px] font-bold text-[#0033A0]">
+                            Información de la póliza
+                        </h2>
+                        <FaChevronDown
+                            className={`transition-transform text-[#0033A0] h-9 w-9 ${
+                                showInfo.poliza ? "rotate-180" : ""
+                            }`}
+                        />
+                    </div>
+
+                    {showInfo.poliza && (
+                        <>
+                            <div className="flex justify-end absolute right-36 mt-2">
+                                <button
+                                    className="bg-[#F8F8F8] p-3 rounded-[28px] flex items-center justify-center"
+                                    onClick={() => setEditable(!editable)}
+                                >
+                                    <CiEdit className="text-[#888B8D] w-6 h-6"/>
+                                </button>
+                            </div>
+
+                            <div className="grid justify-start ml-5 gap-y-5 mt-4">
+                                {Object.entries(aseguradoData).map(([key, value]) => (
+                                    <div key={key} className="grid grid-cols-2 items-center">
+                        <span className="font-bold text-[#0033A0] text-right pr-4">
+                            {key.replace(/([A-Z])/g, " $1")}:
+                        </span>
+                                        <input
+                                            type="text"
+                                            name={key}
+                                            value={value || ""}
+                                            onChange={(e) => handleAseguradoChange(e, key)}
+                                            disabled={!editable}
+                                            className={`border p-1 rounded-[20px] px-5 transition-all duration-200 ${
+                                                editable ? "bg-white text-black" : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                            }`}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+
+                <div className={'mt-5'}>
+                    <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => toggleSection("mascotas")}
+                    >
+                        <h2 className="text-[16px] font-bold text-[#0033A0]">
+                            Información de la(s) mascota(s)
+                        </h2>
+                        <FaChevronDown
+                            className={`transition-transform text-[#0033A0] h-9 w-9 ${
+                                showInfo.mascotas ? "rotate-180" : ""
+                            }`}
+                        />
+                    </div>
+
+                    {showInfo.mascotas && (
+                        <>
+                            <div className="flex justify-end absolute right-36 mt-2">
+                                <button
+                                    className="bg-[#F8F8F8] p-3 rounded-[28px] flex items-center justify-center"
+                                    onClick={() => setEditable(!editable)}
+                                >
+                                    <CiEdit className="text-[#888B8D] w-6 h-6"/>
+                                </button>
+                            </div>
+
+                            <div className="grid justify-start ml-5 gap-y-5 mt-4">
+                                {mascotasData.map((mascota, index) =>
+                                    Object.entries(mascota).map(([key, value]) => {
+                                        const fieldKey = `${index}-${key}`;
+                                        return (
+                                            <div key={fieldKey} className="grid grid-cols-2 items-center">
+                                                <span className="font-bold text-[#0033A0] text-right pr-4">
+                                                    {key.replace(/([A-Z])/g, " $1")}:
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    value={value}
+                                                    onChange={(e) => handleMascotaChange(e, index, key)}
+                                                    disabled={!editable}
+                                                    className={`border p-1 rounded-[20px] px-5 transition-all duration-200 ${
+                                                        editable ? "bg-white text-black" : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                                    }`}
+                                                />
+                                            </div>
+                                        );
+                                    })
+                                )}
+
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                <div className={'mt-5'}>
+                    <div className="flex items-center justify-between cursor-pointer"
+                         onClick={() => toggleSection("pagoAsesor")}>
+                        <h2 className="text-[16px] font-bold text-[#0033A0]">Información de pago y asesor</h2>
+                        <FaChevronDown
+                            className={`transition-transform text-[#0033A0] h-9 w-9 ${showInfo.pagoAsesor ? "rotate-180" : ""}`}/>
+                    </div>
+
+                    {showInfo.pagoAsesor && (
+                        <>
+                            <div className="flex justify-end absolute right-36 mt-2">
+                                <button
+                                    className="bg-[#F8F8F8] p-3 rounded-[28px] flex items-center justify-center"
+                                    onClick={() => setEditable(!editable)}
+                                >
+                                    <CiEdit className="text-[#888B8D] w-6 h-6"/>
+                                </button>
+                            </div>
+
+                            <div className="grid justify-start ml-5 gap-y-5 mt-4">
+                                {pagoAsesorData.map((pagoAsesor, index) =>
+                                    Object.entries(pagoAsesor).map(([key, value]) => {
+                                        const fieldKey = `${index}-${key}`;
+                                        return (
+                                            <div key={fieldKey} className="grid grid-cols-2 items-center">
+                                                <span className="font-bold text-[#0033A0] text-right pr-4">
+                                                    {key.replace(/([A-Z])/g, " $1")}:
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    value={value}
+                                                    onChange={(e) => handlePagoAsesorChange(e, index, key)}
+                                                    disabled={!editable}
+                                                    className={`border p-1 rounded-[20px] px-5 ml-3 transition-all duration-200 ${
+                                                        editable ? "bg-white text-black" : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                                    }`}
+                                                />
+                                            </div>
+                                        );
+                                    })
+                                )}
+
+
+                            </div>
+                        </>
+                    )}
+                </div>
+                {editable && (
+                    <button
+                        className="mt-4 bg-[#2D6DF6] text-white px-4 py-2 rounded-[20px] w-[132px] hover:cursor-pointer"
+                        onClick={handleUpload}
+                    >
+                        Guardar
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
+;
+
