@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: "Sura-Sans";
+    font-style: normal;
+    font-weight: normal;
+    src: url("https://staticdigital.labsura.com.co/assets/fonts/SuraSans.woff2") format("woff2"),
+    url("https://staticdigital.labsura.com.co/assets/fonts/SuraSans.ttf") format("truetype");
+}
+
+body {
+    font-family: "Sura-Sans" !important;
+}
