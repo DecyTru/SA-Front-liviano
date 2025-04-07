@@ -4,8 +4,7 @@ import {useState} from "react";
 import {requestSearch} from "../core/services/requestSearch.js";
 import Table from "../features/edicion/components/Table.jsx";
 import { IoIosSearch } from "react-icons/io";
-
-
+import Swal from 'sweetalert2';
 
 export function SearchPage() {
     const [tipoBusquedaState, setTipoBusquedaState] = useState("individual");
@@ -29,28 +28,48 @@ export function SearchPage() {
         setFormValues((prev) => ({...prev, [option]: value}));
     };
 
+
     const handleRequestSearch = async () => {
         setSearchData(null);
         setError(null);
-    
+
         const searchData = {
             numeroAsegurado: formValues.cedula || formValues.nit || "",
             idMascota: formValues.idMascota || "",
             numeroPoliza: formValues.numeroPoliza || ""
         };
-    
+
         setLoading(true);
-    
+
         try {
             const response = await requestSearch(searchData);
-            setSearchData(response); 
+            setSearchData(response);
         } catch (e) {
-            setError(e.response?.data?.message || "Ocurrió un error al realizar la búsqueda.");
+            const errorMessage = e.response?.data?.message;
+            setError(errorMessage);
             setSearchData(null);
+
+            // Mostrar el popup y reiniciar al confirmar
+            Swal.fire({
+                icon: 'error',
+                title: 'No existen datos con esos valores',
+                text: errorMessage,
+                confirmButtonText: 'Aceptar'
+            }).then(() => {
+                // Reiniciar inputs solo cuando el usuario hace clic en "Aceptar"
+                setFormValues({
+                    cedula: "",
+                    nit: "",
+                    idMascota: "",
+                    numeroPoliza: ""
+                });
+            });
         } finally {
             setLoading(false);
         }
     };
+
+
 
 
     return (
@@ -110,6 +129,7 @@ export function SearchPage() {
                                     type="text"
                                     className=" p-2 px-3 text-[#B4B4B5] h-[44px] border-1 border-[#0033A0] rounded-md"
                                     placeholder="EJ: 1092768965"
+                                    value={formValues.cedula || ""}
                                     onChange={(e) => handleInputChange("cedula", e.target.value)}
                                     disabled={loading}
                                 />
@@ -121,6 +141,7 @@ export function SearchPage() {
                                     type="number"
                                     className=" p-1 px-3 text-[#B4B4B5] h-[44px] border-1 border-[#0033A0] rounded-md"
                                     placeholder="Ingrese NIT"
+                                    value={formValues.nit || ""}
                                     onChange={(e) => handleInputChange("nit", e.target.value)}
                                     disabled={loading}
                                 />
@@ -133,6 +154,7 @@ export function SearchPage() {
                                 type="number"
                                 className="p-1 px-3 text-[#B4B4B5] h-[44px] border-1 border-[#0033A0] rounded-md"
                                 placeholder="EJ: ACPU5678JIL"
+                                value={formValues.idMascota || ""}
                                 onChange={(e) => handleInputChange("idMascota", e.target.value)}
                                 disabled={loading}
                             />
@@ -144,6 +166,7 @@ export function SearchPage() {
                                 type="number"
                                 className="p-1 px-3 text-[#B4B4B5] h-[44px] border-1 border-[#0033A0] rounded-md"
                                 placeholder="EJ: 12345C678"
+                                value={formValues.numeroPoliza || ""}
                                 onChange={(e) => handleInputChange("numeroPoliza", e.target.value)}
                                 disabled={loading}
                             />

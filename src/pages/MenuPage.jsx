@@ -1,5 +1,5 @@
 import { useNavigate} from "react-router-dom";
-import TrabajoEnEquipo from "../assets/TrabajoEnEquipo.png";
+import TrabajoEnEquipo from "https://image.comunicaciones.sura.com/lib/fe3911727564047d771277/m/1/2afcfa13-8e7e-4f20-b1c4-6c9f56f4c2a0.png";
 
 export  function MenuPage() {
     const navigate = useNavigate();
@@ -15,6 +15,8 @@ export  function MenuPage() {
     const handleUpload = () => {
         navigate("/upload");
     }
+
+    
 
     return (
         <>

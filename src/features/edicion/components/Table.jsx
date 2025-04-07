@@ -23,7 +23,7 @@ export default function Table({ data }) {
         Telefono: data.Asegurado.Telefono,
         Email: data.Asegurado.Email,
         Direccion: data.Asegurado.Direccion,
-        Ciudad: data.Asegurado.Ciudad,
+        Ciudad: data.Asegurado.Ciudad
     });
     const [loading, setLoading] = useState(false);
 
@@ -106,20 +106,19 @@ export default function Table({ data }) {
                         
                         newPagoAsesor[index] = { 
                             ...newPagoAsesor[index], 
-                            [key]: formattedDateTime // Guardamos el valor formateado correctamente
+                            [key]: formattedDateTime
                         };
                     }
                 } else {
-                    // Si el valor es vacío, limpiamos el estado
                     newPagoAsesor[index] = { 
                         ...newPagoAsesor[index], 
-                        [key]: "" // Asignamos un valor vacío
+                        [key]: ""
                     };
                 }
             } else if (value) {
                 newPagoAsesor[index] = { 
                     ...newPagoAsesor[index], 
-                    [key]: value // Usamos el valor directamente
+                    [key]: value
                 };
             }
     
@@ -174,7 +173,7 @@ console.log(aseguradoData);
     <h2 className="text-[#2D6DF6] font-bold text-[18px]">Resultados de búsqueda</h2>
     <p><strong>Cédula:</strong> {aseguradoData.NumeroIdAsegurado}</p>
     <div className="border-1 border-[#81B1FF] rounded-[24px] bg-white py-4 px-6">
-        
+
         {/* Información de la póliza */}
         <div>
             <div
@@ -473,7 +472,29 @@ console.log(aseguradoData);
                                                         !editable ? (
                                                             <input
                                                                 type="text"
-                                                                value={pagoAsesor.InicioDeVigencia || "Sin datos"} // Mostramos "Sin datos" si el valor es vacío
+                                                                value={pagoAsesor.InicioDeVigencia
+                                                                    ? (() => {
+                                                                        const rawValue = pagoAsesor.InicioDeVigencia;
+
+                                                                        // Intentamos convertir el dato a un objeto Date
+                                                                        const date = new Date(rawValue);
+                                                                        if (!isNaN(date.getTime())) {
+                                                                            // Si es una fecha válida, formateamos
+                                                                            const day = date.getDate();
+                                                                            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Meses van de 0 a 11
+                                                                            const year = date.getFullYear();
+                                                                            let hour = date.getHours();
+                                                                            const minute = date.getMinutes().toString().padStart(2, '0');
+                                                                            const period = hour >= 12 ? 'p. m.' : 'a. m.';
+                                                                            hour = hour % 12 || 12; // Convertir a formato de 12 horas
+                                                                            return `${day}/${month}/${year} ${hour}:${minute} ${period}`;
+                                                                        }
+
+                                                                        // Si no es una fecha válida, mostramos un mensaje
+                                                                        return "Formato inválido";
+                                                                    })()
+                                                                    : "Sin datos" // Si no hay datos, mostramos "Sin datos"
+                                                                }
                                                                 disabled
                                                                 className={`${editable ? "bg-white text-black" : "bg-gray-300 text-gray-600 cursor-not-allowed"} border p-1 rounded-[20px] px-5 ml-3 transition-all duration-200`}
                                                                 style={{
@@ -486,26 +507,16 @@ console.log(aseguradoData);
                                                                 type="datetime-local"
                                                                 value={pagoAsesor.InicioDeVigencia
                                                                     ? (() => {
-                                                                        const rawValue = pagoAsesor.InicioDeVigencia;
-                                                    
-                                                                        // Convertimos de DD/MM/YYYY HH:mm a. m./p. m. a ISO (YYYY-MM-DDTHH:mm)
-                                                                        if (rawValue.includes("/")) {
-                                                                            const [date, time] = rawValue.split(" "); // Separar fecha y hora
-                                                                            const [day, month, year] = date.split("/"); // Extraer día, mes y año
-                                                                            const [hourMinute, period] = time.split(" "); // Extraer hora:minuto y período (a. m./p. m.)
-                                                                            let [hour, minute] = hourMinute.split(":"); // Extraer hora y minuto
-                                                    
-                                                                            // Convertir a formato de 24 horas
-                                                                            if (period === "p. m." && hour !== "12") {
-                                                                                hour = (parseInt(hour, 10) + 12).toString();
-                                                                            } else if (period === "a. m." && hour === "12") {
-                                                                                hour = "00";
-                                                                            }
-                                                    
-                                                                            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+                                                                        const date = new Date(pagoAsesor.InicioDeVigencia);
+                                                                        if (!isNaN(date.getTime())) {
+                                                                            const year = date.getFullYear();
+                                                                            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                                                                            const day = date.getDate().toString().padStart(2, '0');
+                                                                            const hours = date.getHours().toString().padStart(2, '0');
+                                                                            const minutes = date.getMinutes().toString().padStart(2, '0');
+                                                                            return `${year}-${month}-${day}T${hours}:${minutes}`;
                                                                         }
-                                                    
-                                                                        return ""; // Si no es un formato válido, devolvemos vacío
+                                                                        return ""; // Si no es una fecha válida, devolvemos vacío
                                                                     })()
                                                                     : ""
                                                                 }
